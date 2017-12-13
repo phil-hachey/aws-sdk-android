@@ -119,6 +119,19 @@ public class HttpRequestFactory {
                 is);
         httpRequest.setStreaming(request.isStreaming());
 
+        if(clientConfiguration.getProxyHost() != null) {
+            try {
+                final URI proxyUri = new URI(String.format(
+                        "https://%s/cognito-idp%s",
+                        clientConfiguration.getProxyHost(),
+                        httpRequest.getUri().getPath()
+                ));
+                httpRequest.setUri(proxyUri);
+            } catch(Exception e) {
+
+            }
+        }
+
         return httpRequest;
     }
 
