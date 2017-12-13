@@ -24,7 +24,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
 import java.net.ProtocolException;
+import java.net.Proxy;
 import java.net.URL;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
@@ -65,10 +67,20 @@ public class UrlHttpClient implements HttpClient {
 
     @Override
     public HttpResponse execute(final HttpRequest request) throws IOException {
-        final URL url = request.getUri().toURL();
-        final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        URL url = null;
         final CurlBuilder curlBuilder = config.isCurlLogging()
                 ? new CurlBuilder(request.getUri().toURL()) : null;
+
+        if(this.config.getProxyHost() != null) {
+            url = new URL(String.format(
+                    "https://%s/cognito-idp%s",
+                    this.config.getProxyHost(),
+                    request.getUri().toURL().getPath()));
+        } else {
+            url = request.getUri().toURL();
+        }
+
+        HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
 
         configureConnection(request, connection);
         applyHeadersAndMethod(request, connection, curlBuilder);
