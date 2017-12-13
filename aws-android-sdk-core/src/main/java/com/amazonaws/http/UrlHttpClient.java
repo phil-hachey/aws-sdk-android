@@ -24,7 +24,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
 import java.net.ProtocolException;
+import java.net.Proxy;
 import java.net.URL;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
@@ -66,9 +68,18 @@ public class UrlHttpClient implements HttpClient {
     @Override
     public HttpResponse execute(final HttpRequest request) throws IOException {
         final URL url = request.getUri().toURL();
-        final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         final CurlBuilder curlBuilder = config.isCurlLogging()
                 ? new CurlBuilder(request.getUri().toURL()) : null;
+
+        HttpURLConnection connection = null;
+
+        if(this.config.getProxyHost() != null && this.config.getProxyPort() > 0) {
+            final Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(
+                    this.config.getProxyHost(), this.config.getProxyPort()));
+            connection = (HttpURLConnection) url.openConnection(proxy);
+        } else {
+            connection = (HttpURLConnection) url.openConnection();
+        }
 
         configureConnection(request, connection);
         applyHeadersAndMethod(request, connection, curlBuilder);
